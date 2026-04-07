@@ -36,7 +36,8 @@ class OpportunityAnalyzer:
             avg_fee_percent = sum(item.marketplace_fee_percent for item in group) / len(group)
             fee_cost = revenue_estimated * (avg_fee_percent / 100)
             profit_estimated = revenue_estimated - (monthly_units * avg_variable_cost) - fee_cost
-            aproveitamento = (profit_estimated / revenue_estimated * 100) if revenue_estimated > 0 else 0.0
+            lucro_percent = (profit_estimated / revenue_estimated * 100) if revenue_estimated > 0 else 0.0
+            aproveitamento = lucro_percent
             market_share = (monthly_units / total_market_units * 100) if total_market_units else 0.0
             recommendation = self._build_recommendation(aproveitamento, monthly_units)
 
@@ -47,7 +48,9 @@ class OpportunityAnalyzer:
                     monthly_units_estimated=monthly_units,
                     monthly_revenue_estimated_brl=round(revenue_estimated, 2),
                     monthly_profit_estimated_brl=round(profit_estimated, 2),
+                    lucro_percent=round(lucro_percent, 2),
                     aproveitamento_percent=round(aproveitamento, 2),
+                    tax_percent=round(avg_fee_percent, 2),
                     market_share_percent=round(market_share, 2),
                     recommendation=recommendation,
                 )
@@ -55,7 +58,7 @@ class OpportunityAnalyzer:
 
         return sorted(
             opportunities,
-            key=lambda item: (item.aproveitamento_percent, item.monthly_units_estimated),
+            key=lambda item: (item.monthly_units_estimated, item.aproveitamento_percent),
             reverse=True,
         )
 
@@ -64,7 +67,7 @@ class OpportunityAnalyzer:
         if unsupported:
             names = ", ".join(sorted(unsupported))
             raise ValueError(
-                "Plataformas não suportadas encontradas no CSV: "
+                "Plataformas não suportadas encontradas na pesquisa: "
                 f"{names}. Use apenas Mercado Livre, Amazon e Shopee."
             )
 
@@ -77,8 +80,8 @@ class OpportunityAnalyzer:
         return groups
 
     def _build_recommendation(self, aproveitamento_percent: float, monthly_units: int) -> str:
-        if aproveitamento_percent >= self.min_aproveitamento_percent and monthly_units >= 200:
+        if aproveitamento_percent >= self.min_aproveitamento_percent and monthly_units >= 50:
             return "Vale a pena"
-        if aproveitamento_percent >= self.min_aproveitamento_percent and monthly_units < 200:
+        if aproveitamento_percent >= self.min_aproveitamento_percent and monthly_units < 50:
             return "Teste em lote pequeno"
         return "Não vale a pena"

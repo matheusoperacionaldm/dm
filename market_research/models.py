@@ -28,6 +28,8 @@ class ProductOpportunity:
     monthly_units_estimated: int
     monthly_revenue_estimated_brl: float
     monthly_profit_estimated_brl: float
+    lucro_percent: float
     aproveitamento_percent: float
+    tax_percent: float
     market_share_percent: float
     recommendation: str
