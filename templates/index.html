@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analisador de Produto por Link</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #182230;
+      --muted: #5a6b80;
+      --border: #d6deea;
+      --primary: #2f6fed;
+      --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+    }
+    html[data-theme="dark"] {
+      --bg: #0f1722;
+      --card: #182332;
+      --text: #e5edf8;
+      --muted: #9fb1c8;
+      --border: #2b3a4f;
+      --primary: #5f97ff;
+      --shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, Arial, sans-serif; }
+    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px; }
+    input, button { border-radius: 10px; border: 1px solid var(--border); padding: 11px; font-size: 14px; }
+    input { width: 100%; background: transparent; color: var(--text); }
+    button { background: var(--primary); color: #fff; cursor: pointer; border: none; }
+    .row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+    .btn-alt { background: #ef4444; }
+    .btn-theme { background: #334155; }
+    .error { color: #ef4444; font-weight: 700; }
+    .info { color: #22c55e; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+    th { width: 260px; color: var(--muted); font-weight: 600; }
+    .profit-green { color: #16a34a; font-weight: 700; }
+    .profit-orange { color: #f59e0b; font-weight: 700; }
+    .profit-red { color: #ef4444; font-weight: 700; }
+    footer { text-align: center; color: var(--muted); margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="toolbar">
+      <h1>Análise automática por link</h1>
+      <button type="button" class="btn-theme" onclick="toggleTheme()">Alternar tema escuro/claro</button>
+    </div>
+
+    <div class="card">
+      <p>Cole o link do produto para análise detalhada e verídica da plataforma detectada automaticamente.</p>
+      <form action="/analisar-link" method="post" class="row">
+        <input type="url" name="product_url" placeholder="https://..." required>
+        <button type="submit">Analisar</button>
+      </form>
+      <form action="/limpar-pesquisas" method="post" style="margin-top:8px;">
+        <button type="submit" class="btn-alt">Limpar pesquisas locais</button>
+      </form>
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      {% if info %}<p class="info">{{ info }}</p>{% endif %}
+    </div>
+
+    {% if result %}
+    <div class="card">
+      <h2>Resultado principal</h2>
+      <p><strong>Status da coleta:</strong> {{ result.data_quality_note }}</p>
+      {% set lucro = result.lucro_percent %}
+      {% if lucro > 15 %}
+        {% set lucro_class = 'profit-green' %}
+      {% elif lucro >= 9 %}
+        {% set lucro_class = 'profit-orange' %}
+      {% elif lucro >= 5 %}
+        {% set lucro_class = 'profit-red' %}
+      {% else %}
+        {% set lucro_class = '' %}
+      {% endif %}
+      <table>
+        <tr><th>Plataforma</th><td>{{ result.platform }}</td></tr>
+        <tr><th>Título</th><td>{{ result.title }}</td></tr>
+        <tr><th>Fabricante</th><td>{{ result.manufacturer }}</td></tr>
+        <tr><th>Preço de venda do produto</th><td>{{ ('R$ ' ~ ('%.2f'|format(result.price))) if result.price else 'N/D' }}</td></tr>
+        <tr><th>Número de vendas nos últimos 30 dias</th><td>{{ result.sales_last_30d if result.sales_last_30d else 'N/D' }}</td></tr>
+        <tr><th>Qualidade das avaliações</th><td>{{ result.reviews_quality if result.reviews_count or result.rating else 'N/D' }} | Nota: {{ '%.2f'|format(result.rating) if result.rating else 'N/D' }} | Avaliações: {{ result.reviews_count if result.reviews_count else 'N/D' }}</td></tr>
+        <tr><th>Bom para vender?</th><td>{{ result.is_good_to_sell }}</td></tr>
+        <tr><th>Impostos/Taxas (%)</th><td>{{ '%.2f'|format(result.tax_percent) if result.tax_percent else 'N/D' }}</td></tr>
+        <tr><th>Lucro estimado (%)</th><td class="{{ lucro_class }}">{{ '%.2f'|format(result.lucro_percent) if result.lucro_percent else 'N/D' }}</td></tr>
+        <tr><th>Preço médio na plataforma</th><td>R$ {{ '%.2f'|format(result.price_stats.avg_price) if result.price_stats.avg_price else 'N/D' }}</td></tr>
+        <tr><th>Menor preço de vendas</th><td>{{ ('R$ ' ~ ('%.2f'|format(result.price_stats.min_price))) if result.price_stats.min_price else 'N/D' }} | vendas: {{ result.price_stats.min_price_sales if result.price_stats.min_price_sales is not none else 'N/D' }}</td></tr>
+        <tr><th>Maior preço de vendas</th><td>{{ ('R$ ' ~ ('%.2f'|format(result.price_stats.max_price))) if result.price_stats.max_price else 'N/D' }} | vendas: {{ result.price_stats.max_price_sales if result.price_stats.max_price_sales is not none else 'N/D' }}</td></tr>
+        <tr><th>Preço vs concorrência</th><td>{{ ('%.2f'|format(result.price_vs_competitors_percent) ~ '%') if result.price_vs_competitors_percent is not none else 'N/D' }}</td></tr>
+        <tr><th>Arquivo salvo em</th><td>{{ result.saved_file }}</td></tr>
+        <tr><th>Nome do arquivo</th><td>{{ result.saved_file_name }}</td></tr>
+      </table>
+
+      <h3>Melhorias recomendadas (detalhadas)</h3>
+      <ul>
+        <li><strong>Título:</strong> {{ result.improvements.titulo }}</li>
+        <li><strong>Descrição:</strong> {{ result.improvements.descricao }}</li>
+        <li><strong>Fotos:</strong> {{ result.improvements.fotos }}</li>
+        <li><strong>Capa:</strong> {{ result.improvements.capa }}</li>
+        <li><strong>Preço:</strong> {{ result.improvements.preco }}</li>
+        <li><strong>Avaliações:</strong> {{ result.improvements.avaliacoes }}</li>
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Histórico local</h2>
+      {% if history %}
+      <ul>
+        {% for item in history %}
+        <li>{{ item.analyzed_at }} — {{ item.platform }} — {{ item.title }} — {{ item.is_good_to_sell }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>Nenhuma pesquisa salva ainda.</p>
+      {% endif %}
+    </div>
+
+    <footer>Desenvolvido por Matheus Bassini</footer>
+  </div>
+
+  <script>
+    const storedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', storedTheme);
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+  </script>
+</body>
+</html>
