@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import asdict
+import json
+from pathlib import Path
 
 from flask import Flask, render_template, request
 
-from market_research import OpportunityAnalyzer
-from market_research.fetchers import fetch_market_data
+from market_research.link_analysis import HISTORY_DIR, analyze_product_url
 
 
 def create_app() -> Flask:
@@ -13,44 +13,40 @@ def create_app() -> Flask:
 
     @app.get("/")
     def index():
-        return render_template("index.html", results=None, error=None)
+        return render_template("index.html", result=None, error=None, history=_load_history())
 
-    @app.post("/analisar")
-    def analisar():
-        query = (request.form.get("query") or "").strip()
-        selected_platforms = request.form.getlist("platforms")
-        min_aproveitamento = request.form.get("min_aproveitamento", "8")
-
-        if not query:
-            return render_template("index.html", results=None, error="Digite um produto para pesquisar.")
-        if not selected_platforms:
-            return render_template("index.html", results=None, error="Selecione ao menos uma plataforma.")
+    @app.post("/analisar-link")
+    def analisar_link():
+        url = (request.form.get("product_url") or "").strip()
+        if not url:
+            return render_template("index.html", result=None, error="Informe o link do produto.", history=_load_history())
 
         try:
-            min_aproveitamento_float = float(min_aproveitamento)
-        except ValueError:
+            result = analyze_product_url(url)
+        except Exception as exc:  # noqa: BLE001
             return render_template(
                 "index.html",
-                results=None,
-                error="O valor de aproveitamento mínimo precisa ser numérico.",
+                result=None,
+                error=f"Falha na análise automática: {exc}",
+                history=_load_history(),
             )
 
-        try:
-            listings = fetch_market_data(query=query, platforms=selected_platforms)
-            if not listings:
-                return render_template(
-                    "index.html",
-                    results=[],
-                    error="Nenhum resultado encontrado. Tente outro termo.",
-                )
-            analyzer = OpportunityAnalyzer(min_aproveitamento_percent=min_aproveitamento_float)
-            results = [asdict(item) for item in analyzer.analyze(listings)]
-        except Exception as exc:  # noqa: BLE001
-            return render_template("index.html", results=None, error=f"Erro ao consultar marketplaces: {exc}")
-
-        return render_template("index.html", results=results, error=None)
+        return render_template("index.html", result=result, error=None, history=_load_history())
 
     return app
+
+
+def _load_history(limit: int = 10) -> list[dict]:
+    if not HISTORY_DIR.exists():
+        return []
+    files = sorted(HISTORY_DIR.glob("*.json"), reverse=True)[:limit]
+    items: list[dict] = []
+    for file in files:
+        try:
+            items.append(json.loads(file.read_text(encoding="utf-8")))
+        except Exception:  # noqa: BLE001
+            continue
+    return items
 
 
 app = create_app()

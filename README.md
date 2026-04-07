@@ -1,21 +1,29 @@
-# Sistema local de pesquisa de mercado (Mercado Livre, Amazon e Shopee)
+# Analisador local de produto por link (Mercado Livre, Amazon e Shopee)
 
-Projeto em Python para análise de oportunidades de produto sem CSV, buscando automaticamente anúncios nas plataformas selecionadas.
+Aplicação local em Python + HTML para pequenas empresas independentes (micro-saas local): você cola o link de um produto e o sistema detecta automaticamente a plataforma, analisa os dados principais e salva o histórico localmente.
 
-## O que o sistema calcula automaticamente
+## Funcionalidades principais
 
-- Produtos com maior índice de venda por termo pesquisado.
-- Número aproximado de vendas mensais.
-- Receita mensal estimada.
-- Lucro mensal estimado.
-- Lucro (%).
-- Aproveitamento de vendas (%).
-- Impostos/Taxas de marketplace (% médio por produto).
-- Recomendação final (`Vale a pena`, `Teste em lote pequeno`, `Não vale a pena`).
-
-## Requisitos
-
-- Python 3.11+
+- Detecta automaticamente se o link é de:
+  - Mercado Livre
+  - Amazon
+  - Shopee
+- Extrai e analisa:
+  - Número de vendas
+  - Número de avaliações
+  - Qualidade das avaliações (boas/médias/ruins)
+  - Fabricante / marca
+  - Lucro estimado (%)
+  - Impostos/Taxas (%)
+  - Comparação de preço com concorrentes
+  - Recomendação de venda (sim/talvez/não)
+- Gera sugestões de melhoria para:
+  - Título
+  - Descrição
+  - Fotos
+  - Capa
+  - Preço
+- Salva automaticamente histórico local em `research_history/`.
 
 ## Instalação
 
@@ -25,32 +33,24 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Rodar localmente (HTML + Python, sem CSV)
+## Executar localmente
 
 ```bash
 python3 app.py
 ```
 
-Abra no navegador:
+Acesse:
 
 - `http://127.0.0.1:5000`
 
-No site:
+## Armazenamento local
 
-1. Digite o produto (ex.: `fone bluetooth`).
-2. Marque Mercado Livre, Amazon e/ou Shopee.
-3. Clique em **Analisar automaticamente**.
+Cada análise é salva em arquivo JSON dentro da pasta:
 
-## Rodar via terminal (CLI, opcional com CSV)
+- `research_history/`
 
-A versão CLI permanece disponível para uso com CSV local:
+## Observações importantes
 
-```bash
-python3 main.py sample_data.csv
-```
-
-## Observações
-
-- A coleta automática depende da disponibilidade dos endpoints públicos das plataformas.
-- Em caso de bloqueio temporário de uma plataforma, as demais continuam sendo analisadas.
-- Os percentuais de impostos/taxas são estimados com base em taxa média por marketplace.
+- A coleta depende de endpoints públicos e estrutura atual das páginas das plataformas.
+- Se a plataforma alterar o layout/API, pode ser necessário ajustar os parsers.
+- Todo processamento é local, sem dependência de banco externo.

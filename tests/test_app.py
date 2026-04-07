@@ -6,7 +6,6 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from app import create_app
-from market_research.models import ProductListing
 
 
 def test_home_page_loads() -> None:
@@ -16,44 +15,45 @@ def test_home_page_loads() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Pesquisa automática de produtos" in response.get_data(as_text=True)
+    assert "Análise automática por link do produto" in response.get_data(as_text=True)
 
 
-def test_search_and_analyze(monkeypatch) -> None:
+def test_link_analysis_flow(monkeypatch) -> None:
     app = create_app()
     client = app.test_client()
 
-    def fake_fetch_market_data(query: str, platforms: list[str]):
-        assert query == "fone bluetooth"
-        assert "amazon" in platforms
-        return [
-            ProductListing(
-                platform="amazon",
-                product_name="Fone Bluetooth X",
-                category="eletronicos",
-                seller="seller1",
-                unit_price_brl=100,
-                units_sold_last_30d=300,
-                shipping_cost_brl=8,
-                product_cost_brl=50,
-                ad_cost_brl=5,
-                marketplace_fee_percent=18,
-            )
-        ]
+    def fake_analyze_product_url(url: str):
+        assert "amazon.com.br" in url
+        return {
+            "platform": "amazon",
+            "title": "Produto X",
+            "manufacturer": "Marca X",
+            "price": 120.0,
+            "sales_count": 240,
+            "reviews_count": 87,
+            "reviews_quality": "Boas",
+            "rating": 4.5,
+            "tax_percent": 18.0,
+            "lucro_percent": 22.0,
+            "price_vs_competitors_percent": -4.5,
+            "is_good_to_sell": "Sim",
+            "saved_file": "research_history/amazon_20260101_101010.json",
+            "improvements": {
+                "titulo": "Melhorar com palavra-chave",
+                "descricao": "Adicionar diferenciais",
+                "fotos": "Mais fotos",
+                "capa": "Melhor capa",
+                "preco": "Preço competitivo",
+            },
+            "analyzed_at": "2026-01-01T10:10:10Z",
+        }
 
-    monkeypatch.setattr("app.fetch_market_data", fake_fetch_market_data)
+    monkeypatch.setattr("app.analyze_product_url", fake_analyze_product_url)
 
-    response = client.post(
-        "/analisar",
-        data={
-            "query": "fone bluetooth",
-            "platforms": ["amazon"],
-            "min_aproveitamento": "8",
-        },
-    )
+    response = client.post("/analisar-link", data={"product_url": "https://www.amazon.com.br/dp/B0TESTE"})
 
     body = response.get_data(as_text=True)
     assert response.status_code == 200
-    assert "Fone Bluetooth X" in body
-    assert "Vale a pena" in body
-    assert "Impostos/Taxas (%)" in body
+    assert "Produto X" in body
+    assert "Bom para venda?" in body
+    assert "Desenvolvido por Matheus Bassini" in body
