@@ -1,29 +1,22 @@
 # Analisador local de produto por link (Mercado Livre, Amazon e Shopee)
 
-Aplicação local em Python + HTML para pequenas empresas independentes (micro-saas local): você cola o link de um produto e o sistema detecta automaticamente a plataforma, analisa os dados principais e salva o histórico localmente.
+Aplicação local em Python + HTML para micro-saas e pequenas empresas independentes.
 
-## Funcionalidades principais
+## Funcionalidades
 
-- Detecta automaticamente se o link é de:
-  - Mercado Livre
-  - Amazon
-  - Shopee
-- Extrai e analisa:
-  - Número de vendas
-  - Número de avaliações
-  - Qualidade das avaliações (boas/médias/ruins)
-  - Fabricante / marca
-  - Lucro estimado (%)
-  - Impostos/Taxas (%)
-  - Comparação de preço com concorrentes
-  - Recomendação de venda (sim/talvez/não)
-- Gera sugestões de melhoria para:
-  - Título
-  - Descrição
-  - Fotos
-  - Capa
-  - Preço
-- Salva automaticamente histórico local em `research_history/`.
+- Análise automática por link do produto (detecção da plataforma).
+- Número de vendas nos últimos 30 dias.
+- Qualidade das avaliações com nota e quantidade de avaliações.
+- Fabricante do produto.
+- Lucro estimado (%), impostos/taxas (%).
+- Classificação de venda:
+  - **Bom para vender**: mais de 500 vendas nos últimos 30 dias.
+  - **Ruim para vender**: poucas vendas nos últimos 30 dias.
+- Preço médio, menor preço e maior preço da plataforma + vendas nesses preços.
+- Melhorias detalhadas de título, descrição, fotos, capa, preço e avaliações.
+- Histórico local em `research_history/`.
+- Botão para limpar pesquisas locais.
+- Interface moderna com alternância de tema claro/escuro.
 
 ## Instalação
 
@@ -33,24 +26,16 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Executar localmente
+## Executar
 
 ```bash
 python3 app.py
 ```
 
-Acesse:
+Acesse `http://127.0.0.1:5000`.
 
-- `http://127.0.0.1:5000`
+## Observações
 
-## Armazenamento local
-
-Cada análise é salva em arquivo JSON dentro da pasta:
-
-- `research_history/`
-
-## Observações importantes
-
-- A coleta depende de endpoints públicos e estrutura atual das páginas das plataformas.
-- Se a plataforma alterar o layout/API, pode ser necessário ajustar os parsers.
-- Todo processamento é local, sem dependência de banco externo.
+- A precisão depende dos dados disponíveis publicamente em cada plataforma.
+- Caso uma plataforma altere estrutura de página/API, os parsers podem precisar de ajuste.
+- O processamento e armazenamento são locais.
