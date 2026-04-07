@@ -16,6 +16,12 @@ USER_AGENT = {"User-Agent": "Mozilla/5.0"}
 PLATFORM_TAX = {"mercado livre": 16.0, "amazon": 18.0, "shopee": 14.0}
 
 
+def _safe_text(node, default: str = "") -> str:
+    if node is None:
+        return default
+    return node.get_text(" ", strip=True)
+
+
 def analyze_product_url(url: str, product_cost_percent: float = 55.0, ad_percent: float = 5.0) -> dict:
     platform = detect_platform(url)
     if platform == "mercado livre":
@@ -141,18 +147,18 @@ def _analyze_amazon(url: str) -> dict:
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    title = (soup.select_one("#productTitle") or soup.select_one("h1")).get_text(" ", strip=True)
+    title = _safe_text(soup.select_one("#productTitle") or soup.select_one("h1"), "Sem título")
     whole = soup.select_one("span.a-price-whole")
     frac = soup.select_one("span.a-price-fraction")
     price = _parse_decimal_br((whole.get_text(strip=True) if whole else "") + "." + (frac.get_text(strip=True) if frac else "00"))
 
-    rating_text = soup.select_one("span.a-icon-alt")
-    rating = _extract_first_number(rating_text.get_text("", strip=True) if rating_text else "")
-    reviews_text = soup.select_one("#acrCustomerReviewText")
-    reviews_count = int(_extract_first_number(reviews_text.get_text("", strip=True).replace(".", "") if reviews_text else ""))
+    rating_text = _safe_text(soup.select_one("span.a-icon-alt"), "")
+    rating = _extract_first_number(rating_text)
+    reviews_text = _safe_text(soup.select_one("#acrCustomerReviewText"), "")
+    reviews_count = int(_extract_first_number(reviews_text.replace(".", "")))
 
     sales_last_30d = _extract_sales_from_text(soup.get_text(" ", strip=True))
-    manufacturer = (soup.select_one("#bylineInfo").get_text(" ", strip=True) if soup.select_one("#bylineInfo") else "Não informado")
+    manufacturer = _safe_text(soup.select_one("#bylineInfo"), "Não informado")
     stats = _amazon_price_stats(title)
 
     return {
@@ -276,7 +282,12 @@ def _parse_decimal_br(text: str) -> float:
     text = text.strip().replace("R$", "").replace(" ", "")
     if not text:
         return 0.0
-    cleaned = text.replace(".", "").replace(",", ".")
+    if "," in text:
+        cleaned = text.replace(".", "").replace(",", ".")
+    elif text.count(".") == 1 and len(text.split(".")[1]) <= 2:
+        cleaned = text
+    else:
+        cleaned = text.replace(".", "")
     try:
         return float(cleaned)
     except ValueError:
