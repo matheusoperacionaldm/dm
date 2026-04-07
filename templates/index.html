@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesquisa de Mercado Local</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f6f8fa; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    h1 { margin-top: 0; }
+    form { display: grid; gap: 12px; margin-bottom: 20px; }
+    input, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    button { background: #0d6efd; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0b5ed7; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #f1f3f5; }
+    .error { color: #c1121f; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Sistema Local de Pesquisa de Mercado</h1>
+    <p>Faça upload do CSV com dados de Mercado Livre, Amazon e Shopee.</p>
+
+    <form action="/analisar" method="post" enctype="multipart/form-data">
+      <label>
+        CSV:
+        <input type="file" name="csv_file" accept=".csv" required>
+      </label>
+      <label>
+        Aproveitamento mínimo (%):
+        <input type="number" name="min_aproveitamento" value="8" step="0.1" min="0">
+      </label>
+      <button type="submit">Analisar</button>
+    </form>
+
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if results %}
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>Vendas/mês</th>
+            <th>Receita estimada (R$)</th>
+            <th>Lucro estimado (R$)</th>
+            <th>Aproveitamento (%)</th>
+            <th>Market Share (%)</th>
+            <th>Recomendação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in results %}
+            <tr>
+              <td>{{ row.product_name }}</td>
+              <td>{{ row.category }}</td>
+              <td>{{ row.monthly_units_estimated }}</td>
+              <td>{{ '%.2f'|format(row.monthly_revenue_estimated_brl) }}</td>
+              <td>{{ '%.2f'|format(row.monthly_profit_estimated_brl) }}</td>
+              <td>{{ '%.2f'|format(row.aproveitamento_percent) }}</td>
+              <td>{{ '%.2f'|format(row.market_share_percent) }}</td>
+              <td>{{ row.recommendation }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</body>
+</html>

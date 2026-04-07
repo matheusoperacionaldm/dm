@@ -18,6 +18,14 @@ Projeto em Python para análise de oportunidades de produto com base em dados lo
 
 - Python 3.11+
 
+## Instalação
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## Formato do CSV
 
 O arquivo deve conter as colunas:
@@ -35,7 +43,21 @@ O arquivo deve conter as colunas:
 
 Você pode usar `sample_data.csv` como modelo inicial.
 
-## Como executar
+## Rodar localmente (HTML + Python)
+
+Suba a aplicação web local em Flask:
+
+```bash
+python3 app.py
+```
+
+Abra no navegador:
+
+- `http://127.0.0.1:5000`
+
+No site, envie seu CSV e clique em **Analisar** para ver a tabela com métricas.
+
+## Rodar localmente via terminal (CLI)
 
 ```bash
 python3 main.py sample_data.csv
@@ -45,6 +67,12 @@ Com margem mínima personalizada e saída em JSON:
 
 ```bash
 python3 main.py sample_data.csv --min-aproveitamento 10 --output-json resultado.json
+```
+
+## Testes
+
+```bash
+pytest
 ```
 
 ## Observações

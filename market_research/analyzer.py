@@ -22,7 +22,9 @@ class OpportunityAnalyzer:
         total_market_units = sum(sum(item.units_sold_last_30d for item in group) for group in grouped.values())
 
         opportunities: list[ProductOpportunity] = []
-        for (product_name, category), group in grouped.items():
+        for (_product_key, _category_key), group in grouped.items():
+            product_name = group[0].product_name
+            category = group[0].category
             monthly_units = sum(item.units_sold_last_30d for item in group)
             avg_price = sum(item.unit_price_brl for item in group) / len(group)
             revenue_estimated = monthly_units * avg_price
