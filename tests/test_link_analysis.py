@@ -35,3 +35,8 @@ def test_analyze_amazon_without_title_does_not_crash(monkeypatch) -> None:
 
     assert result["title"] == "Sem título"
     assert result["price"] == 123.45
+
+
+def test_sell_recommendation_uses_sales_and_profit() -> None:
+    assert la._is_good_to_sell(40000, 22.0) == "Bom para vender"
+    assert la._is_good_to_sell(40000, 8.0) == "Venda alta, mas margem baixa"

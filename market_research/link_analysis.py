@@ -41,6 +41,12 @@ def analyze_product_url(url: str, product_cost_percent: float = 55.0, ad_percent
 
     price = float(data.get("price") or 0)
     sales_last_30d = int(data.get("sales_last_30d") or 0)
+    stats = data.get("price_stats") or {}
+    inferred_sales = max(int(stats.get("min_price_sales") or 0), int(stats.get("max_price_sales") or 0))
+    if sales_last_30d <= 0 and inferred_sales > 0:
+        sales_last_30d = inferred_sales
+        data["sales_last_30d"] = sales_last_30d
+        data["sales_count"] = sales_last_30d
     missing_core = price <= 0 and sales_last_30d <= 0 and int(data.get("reviews_count") or 0) == 0
     tax_percent = PLATFORM_TAX[platform]
     cost_value = price * (product_cost_percent / 100)
@@ -54,7 +60,7 @@ def analyze_product_url(url: str, product_cost_percent: float = 55.0, ad_percent
             "platform": platform,
             "lucro_percent": round(lucro_percent, 2),
             "tax_percent": round(tax_percent, 2),
-            "is_good_to_sell": _is_good_to_sell(sales_last_30d),
+            "is_good_to_sell": _is_good_to_sell(sales_last_30d, lucro_percent),
             "improvements": _build_improvement_tips(data),
             "analyzed_at": datetime.utcnow().isoformat() + "Z",
             "data_quality_note": "Dados completos" if not missing_core else "Dados parciais: plataforma pode ter bloqueado coleta automática.",
@@ -338,11 +344,13 @@ def _reviews_quality(rating: float) -> str:
     return "Ruins"
 
 
-def _is_good_to_sell(sales_last_30d: int) -> str:
+def _is_good_to_sell(sales_last_30d: int, lucro_percent: float) -> str:
     if sales_last_30d <= 0:
         return "Dados insuficientes"
-    if sales_last_30d > 500:
+    if sales_last_30d > 500 and lucro_percent >= 15:
         return "Bom para vender"
+    if sales_last_30d > 500:
+        return "Venda alta, mas margem baixa"
     return "Ruim para vender"
 
 
