@@ -68,6 +68,7 @@
     {% if result %}
     <div class="card">
       <h2>Resultado principal</h2>
+      <p><strong>Status da coleta:</strong> {{ result.data_quality_note }}</p>
       {% set lucro = result.lucro_percent %}
       {% if lucro > 15 %}
         {% set lucro_class = 'profit-green' %}
@@ -82,15 +83,15 @@
         <tr><th>Plataforma</th><td>{{ result.platform }}</td></tr>
         <tr><th>Título</th><td>{{ result.title }}</td></tr>
         <tr><th>Fabricante</th><td>{{ result.manufacturer }}</td></tr>
-        <tr><th>Número de vendas nos últimos 30 dias</th><td>{{ result.sales_last_30d }}</td></tr>
-        <tr><th>Qualidade das avaliações</th><td>{{ result.reviews_quality }} | Nota: {{ '%.2f'|format(result.rating) }} | Avaliações: {{ result.reviews_count }}</td></tr>
+        <tr><th>Número de vendas nos últimos 30 dias</th><td>{{ result.sales_last_30d if result.sales_last_30d else 'N/D' }}</td></tr>
+        <tr><th>Qualidade das avaliações</th><td>{{ result.reviews_quality if result.reviews_count or result.rating else 'N/D' }} | Nota: {{ '%.2f'|format(result.rating) if result.rating else 'N/D' }} | Avaliações: {{ result.reviews_count if result.reviews_count else 'N/D' }}</td></tr>
         <tr><th>Bom para vender?</th><td>{{ result.is_good_to_sell }}</td></tr>
-        <tr><th>Impostos/Taxas (%)</th><td>{{ '%.2f'|format(result.tax_percent) }}</td></tr>
-        <tr><th>Lucro estimado (%)</th><td class="{{ lucro_class }}">{{ '%.2f'|format(result.lucro_percent) }}</td></tr>
-        <tr><th>Preço médio na plataforma</th><td>R$ {{ '%.2f'|format(result.price_stats.avg_price) }}</td></tr>
-        <tr><th>Menor preço e vendas nesse preço</th><td>R$ {{ '%.2f'|format(result.price_stats.min_price) }} | vendas: {{ result.price_stats.min_price_sales }}</td></tr>
-        <tr><th>Maior preço e vendas nesse preço</th><td>R$ {{ '%.2f'|format(result.price_stats.max_price) }} | vendas: {{ result.price_stats.max_price_sales }}</td></tr>
-        <tr><th>Preço vs concorrência</th><td>{{ '%.2f'|format(result.price_vs_competitors_percent) }}%</td></tr>
+        <tr><th>Impostos/Taxas (%)</th><td>{{ '%.2f'|format(result.tax_percent) if result.tax_percent else 'N/D' }}</td></tr>
+        <tr><th>Lucro estimado (%)</th><td class="{{ lucro_class }}">{{ '%.2f'|format(result.lucro_percent) if result.lucro_percent else 'N/D' }}</td></tr>
+        <tr><th>Preço médio na plataforma</th><td>R$ {{ '%.2f'|format(result.price_stats.avg_price) if result.price_stats.avg_price else 'N/D' }}</td></tr>
+        <tr><th>Menor preço e vendas nesse preço</th><td>{{ ('R$ ' ~ ('%.2f'|format(result.price_stats.min_price))) if result.price_stats.min_price else 'N/D' }} | vendas: {{ result.price_stats.min_price_sales if result.price_stats.min_price_sales is not none else 'N/D' }}</td></tr>
+        <tr><th>Maior preço e vendas nesse preço</th><td>{{ ('R$ ' ~ ('%.2f'|format(result.price_stats.max_price))) if result.price_stats.max_price else 'N/D' }} | vendas: {{ result.price_stats.max_price_sales if result.price_stats.max_price_sales is not none else 'N/D' }}</td></tr>
+        <tr><th>Preço vs concorrência</th><td>{{ ('%.2f'|format(result.price_vs_competitors_percent) ~ '%') if result.price_vs_competitors_percent is not none else 'N/D' }}</td></tr>
         <tr><th>Arquivo salvo em</th><td>{{ result.saved_file }}</td></tr>
         <tr><th>Nome do arquivo</th><td>{{ result.saved_file_name }}</td></tr>
       </table>

@@ -19,7 +19,13 @@ PLATFORM_TAX = {"mercado livre": 16.0, "amazon": 18.0, "shopee": 14.0}
 def _safe_text(node, default: str = "") -> str:
     if node is None:
         return default
-    return node.get_text(" ", strip=True)
+    if hasattr(node, "get_text"):
+        text = node.get_text(" ", strip=True)
+        if text:
+            return text
+    if hasattr(node, "get"):
+        return node.get("content", default)
+    return default
 
 
 def analyze_product_url(url: str, product_cost_percent: float = 55.0, ad_percent: float = 5.0) -> dict:
@@ -35,6 +41,7 @@ def analyze_product_url(url: str, product_cost_percent: float = 55.0, ad_percent
 
     price = float(data.get("price") or 0)
     sales_last_30d = int(data.get("sales_last_30d") or 0)
+    missing_core = price <= 0 and sales_last_30d <= 0 and int(data.get("reviews_count") or 0) == 0
     tax_percent = PLATFORM_TAX[platform]
     cost_value = price * (product_cost_percent / 100)
     ad_value = price * (ad_percent / 100)
@@ -50,6 +57,7 @@ def analyze_product_url(url: str, product_cost_percent: float = 55.0, ad_percent
             "is_good_to_sell": _is_good_to_sell(sales_last_30d),
             "improvements": _build_improvement_tips(data),
             "analyzed_at": datetime.utcnow().isoformat() + "Z",
+            "data_quality_note": "Dados completos" if not missing_core else "Dados parciais: plataforma pode ter bloqueado coleta automática.",
         }
     )
     saved = save_analysis(data)
@@ -148,6 +156,9 @@ def _analyze_amazon(url: str) -> dict:
     soup = BeautifulSoup(resp.text, "html.parser")
 
     title = _safe_text(soup.select_one("#productTitle") or soup.select_one("h1"), "Sem título")
+    if title == "Sem título":
+        title = _safe_text(soup.select_one("meta[property='og:title']"), "Sem título")
+
     whole = soup.select_one("span.a-price-whole")
     frac = soup.select_one("span.a-price-fraction")
     price = _parse_decimal_br((whole.get_text(strip=True) if whole else "") + "." + (frac.get_text(strip=True) if frac else "00"))
@@ -159,7 +170,15 @@ def _analyze_amazon(url: str) -> dict:
 
     sales_last_30d = _extract_sales_from_text(soup.get_text(" ", strip=True))
     manufacturer = _safe_text(soup.select_one("#bylineInfo"), "Não informado")
-    stats = _amazon_price_stats(title)
+
+    asin_match = re.search(r"/(?:dp|gp/product)/([A-Z0-9]{10})", url, re.I)
+    fallback_query = asin_match.group(1) if asin_match else title
+    stats = _amazon_price_stats(fallback_query)
+
+    if price <= 0 and stats.get("avg_price"):
+        price = float(stats["avg_price"])
+    if title == "Sem título" and fallback_query and fallback_query != "Sem título":
+        title = f"Produto {fallback_query}"
 
     return {
         "url": url,
@@ -269,12 +288,12 @@ def _build_price_stats(points: list[tuple[float, int]]) -> dict:
 
 
 def _empty_price_stats() -> dict:
-    return {"avg_price": 0.0, "min_price": 0.0, "min_price_sales": 0, "max_price": 0.0, "max_price_sales": 0}
+    return {"avg_price": None, "min_price": None, "min_price_sales": None, "max_price": None, "max_price_sales": None}
 
 
-def _percent_delta(price: float, base: float) -> float:
-    if price <= 0 or base <= 0:
-        return 0.0
+def _percent_delta(price: float | None, base: float | None) -> float | None:
+    if not price or not base or price <= 0 or base <= 0:
+        return None
     return round(((price - base) / base) * 100, 2)
 
 
@@ -320,6 +339,8 @@ def _reviews_quality(rating: float) -> str:
 
 
 def _is_good_to_sell(sales_last_30d: int) -> str:
+    if sales_last_30d <= 0:
+        return "Dados insuficientes"
     if sales_last_30d > 500:
         return "Bom para vender"
     return "Ruim para vender"
