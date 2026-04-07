@@ -1,0 +1,10 @@
+platform,product_name,category,seller,unit_price_brl,units_sold_last_30d,shipping_cost_brl,product_cost_brl,ad_cost_brl,marketplace_fee_percent
+mercado livre,Fone Bluetooth TWS,eletronicos,loja_a,129.9,430,12.0,58.0,5.0,16.0
+amazon,Fone Bluetooth TWS,eletronicos,loja_b,139.9,280,10.0,60.0,7.0,17.0
+shopee,Fone Bluetooth TWS,eletronicos,loja_c,119.9,520,13.0,56.0,4.5,14.0
+mercado livre,Garrafa Térmica 1L,casa,loja_d,89.9,310,9.0,35.0,3.0,15.0
+amazon,Garrafa Térmica 1L,casa,loja_e,94.9,250,8.0,38.0,3.5,16.0
+shopee,Garrafa Térmica 1L,casa,loja_f,79.9,410,10.0,32.0,2.8,13.0
+mercado livre,Suporte de Celular Veicular,automotivo,loja_g,39.9,150,7.0,14.0,2.0,15.0
+amazon,Suporte de Celular Veicular,automotivo,loja_h,44.9,95,6.0,16.0,2.4,16.0
+shopee,Suporte de Celular Veicular,automotivo,loja_i,34.9,240,8.0,13.0,1.7,13.0
